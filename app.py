@@ -11,49 +11,27 @@ VERIFY_TOKEN = "my_verify_token_123"  # MUST match Meta dashboard
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-
-    # ✅ STEP 1: META VERIFICATION (GET)
+    # ---- STEP 1: META VERIFICATION (GET) ----
     if request.method == "GET":
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
 
+        VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN")
+
         if mode == "subscribe" and token == VERIFY_TOKEN:
-            print("✅ Webhook verified")
+            print("✅ Webhook verified successfully")
             return challenge, 200
         else:
             print("❌ Verification failed")
             return "Forbidden", 403
 
-    # ✅ STEP 2: INCOMING MESSAGES (POST)
-    try:
-        data = request.get_json()
-        print("🔥 META WEBHOOK HIT")
-        print("📦 DATA:", data)
+    # ---- STEP 2: MESSAGE EVENTS (POST) ----
+    data = request.get_json()
+    print("🔥 META WEBHOOK HIT")
+    print(data)
 
-        entry = data["entry"][0]
-        changes = entry["changes"][0]
-        value = changes["value"]
-        messages = value.get("messages")
-
-        if not messages:
-            return "OK", 200
-
-        msg = messages[0]
-        phone = msg["from"]
-        text = msg["text"]["body"].strip().lower()
-
-        if phone not in sessions:
-            sessions[phone] = {"step": "START", "data": {}}
-
-        reply = handle_message(phone, text)
-        send_whatsapp_message(phone, reply)
-
-        return "EVENT_RECEIVED", 200
-
-    except Exception as e:
-        print("❌ WEBHOOK ERROR:", e)
-        return "ERROR", 200
+    return "EVENT_RECEIVED", 200
 
 
 def handle_message(phone, text):
