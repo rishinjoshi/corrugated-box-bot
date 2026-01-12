@@ -9,23 +9,16 @@ sessions = {}
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
+    print("🔥 META WEBHOOK HIT")
 
-    # STEP 1: Webhook verification (VERY IMPORTANT)
+    # STEP 1: Verification (GET)
     if request.method == "GET":
-        mode = request.args.get("hub.mode")
-        token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
+        return challenge, 200
 
-        if mode == "subscribe" and token == os.environ.get("VERIFY_TOKEN"):
-            print("Webhook verified")
-            return challenge, 200
-        else:
-            return "Verification failed", 403
-
-    # STEP 2: Receive messages
-    if request.method == "POST":
-        data = request.get_json()
-        print("INCOMING MESSAGE:", data)
+    # STEP 2: Incoming message (POST)
+    data = request.get_json()
+    print("📦 DATA RECEIVED:", data)
 
     return "EVENT_RECEIVED", 200
 
