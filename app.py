@@ -1,4 +1,6 @@
 from flask import Flask, request
+import requests
+import os
 
 app = Flask(__name__)
 
@@ -92,9 +94,29 @@ def handle_message(phone, text):
     return "⚠️ Something went wrong. Please type Hi to restart."
 
 
+WHATSAPP_TOKEN = os.environ.get("WHATSAPP_TOKEN")
+PHONE_NUMBER_ID = os.environ.get("PHONE_NUMBER_ID")
+
 def send_whatsapp_message(phone, message):
-    # For now just log (we’ll wire API next)
-    print(f"➡️ Send to {phone}: {message}")
+    url = f"https://graph.facebook.com/v18.0/{PHONE_NUMBER_ID}/messages"
+
+    headers = {
+        "Authorization": f"Bearer {WHATSAPP_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": phone,
+        "type": "text",
+        "text": {
+            "body": message
+        }
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    print("WhatsApp send response:", response.text)
+
 
 
 @app.route("/")
