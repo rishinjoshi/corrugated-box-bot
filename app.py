@@ -9,16 +9,37 @@ sessions = {}
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    print("🔥 META WEBHOOK HIT")
-
-    # STEP 1: Verification (GET)
+    # 🔹 STEP 1: Meta webhook verification (GET)
     if request.method == "GET":
         challenge = request.args.get("hub.challenge")
-        return challenge, 200
+        return challenge or "OK", 200
 
-    # STEP 2: Incoming message (POST)
+    # 🔹 STEP 2: Incoming WhatsApp messages (POST)
     data = request.get_json()
-    print("📦 DATA RECEIVED:", data)
+    print("🔥 WEBHOOK HIT")
+    print("📦 DATA:", data)
+
+    try:
+        entry = data["entry"][0]
+        changes = entry["changes"][0]
+        value = changes["value"]
+        messages = value.get("messages")
+
+        if not messages:
+            return "OK", 200
+
+        msg = messages[0]
+        phone = msg["from"]
+        text = msg["text"]["body"].strip().lower()
+
+        if phone not in sessions:
+            sessions[phone] = {"step": "START", "data": {}}
+
+        reply = handle_message(phone, text)
+        send_whatsapp_message(phone, reply)
+
+    except Exception as e:
+        print("❌ ERROR:", e)
 
     return "EVENT_RECEIVED", 200
 
