@@ -7,19 +7,30 @@ app = Flask(__name__)
 # In-memory session store
 sessions = {}
 
+VERIFY_TOKEN = "my_verify_token_123"  # MUST match Meta dashboard
+
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    # 🔹 STEP 1: Meta webhook verification (GET)
+
+    # ✅ STEP 1: META VERIFICATION (GET)
     if request.method == "GET":
+        mode = request.args.get("hub.mode")
+        token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
-        return challenge or "OK", 200
 
-    # 🔹 STEP 2: Incoming WhatsApp messages (POST)
-    data = request.get_json()
-    print("🔥 WEBHOOK HIT")
-    print("📦 DATA:", data)
+        if mode == "subscribe" and token == VERIFY_TOKEN:
+            print("✅ Webhook verified")
+            return challenge, 200
+        else:
+            print("❌ Verification failed")
+            return "Forbidden", 403
 
+    # ✅ STEP 2: INCOMING MESSAGES (POST)
     try:
+        data = request.get_json()
+        print("🔥 META WEBHOOK HIT")
+        print("📦 DATA:", data)
+
         entry = data["entry"][0]
         changes = entry["changes"][0]
         value = changes["value"]
@@ -38,10 +49,11 @@ def webhook():
         reply = handle_message(phone, text)
         send_whatsapp_message(phone, reply)
 
-    except Exception as e:
-        print("❌ ERROR:", e)
+        return "EVENT_RECEIVED", 200
 
-    return "EVENT_RECEIVED", 200
+    except Exception as e:
+        print("❌ WEBHOOK ERROR:", e)
+        return "ERROR", 200
 
 
 def handle_message(phone, text):
