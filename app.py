@@ -7,7 +7,7 @@ app = Flask(__name__)
 # In-memory session store
 sessions = {}
 
-VERIFY_TOKEN = "my_verify_token_123"  # MUST match Meta dashboard
+VERIFY_TOKEN = "corrugated_box_verify"  # MUST match Meta dashboard
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
