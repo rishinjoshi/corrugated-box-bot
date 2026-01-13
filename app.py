@@ -11,27 +11,18 @@ VERIFY_TOKEN = "corrugated_box_verify"  # MUST match Meta dashboard
 
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
-    # ---- STEP 1: META VERIFICATION (GET) ----
     if request.method == "GET":
+        print("DEBUG PARAMS:", request.args)
+        print("ENV VERIFY_TOKEN:", os.getenv("VERIFY_TOKEN"))
+
         mode = request.args.get("hub.mode")
         token = request.args.get("hub.verify_token")
         challenge = request.args.get("hub.challenge")
 
-        VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN")
-
-        if mode == "subscribe" and token == VERIFY_TOKEN:
-            print("✅ Webhook verified successfully")
+        if mode == "subscribe" and token == os.getenv("VERIFY_TOKEN"):
             return challenge, 200
         else:
-            print("❌ Verification failed")
             return "Forbidden", 403
-
-    # ---- STEP 2: MESSAGE EVENTS (POST) ----
-    data = request.get_json()
-    print("🔥 META WEBHOOK HIT")
-    print(data)
-
-    return "EVENT_RECEIVED", 200
 
 
 def handle_message(phone, text):
